@@ -115,8 +115,8 @@ def model_configuration(option):
     Parameter configuration to execute the funtion :
     ** H5   Human assisted method picking
     model_selection(option, devfile, ootfile, RF_estimators, RF_depth, SVM_kernel, SVM_degree)
-   
     '''
+    
     print("\n"*50)
     print("\n Configuracion de Parametros (Option %s):\n" % option)
     devfile = input("\n Input training filename and path (dev.csv): ")

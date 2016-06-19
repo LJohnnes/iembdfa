@@ -1,115 +1,65 @@
-![Logo of the project](http://www.intechopen.com/storage/users/3888/images/1367_n.jpg)
+<p align="center">
+  <img src="http://www.intechopen.com/storage/users/3888/images/1367_n.jpg" width="48px"/>
+</p>
 
-# Financial Analytics: Final Project, Group F
+# Final Project, Group F
 > Innovation and beyond in Big Data System for Model Development
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-A brief description of your project, what it is used for and how does life get awesome when someone starts to use it.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+This Python 3 package includes 5 algorithms intended to accelerate data cleaning and model development in financial applications.
+
 
 ## Installing / Getting started
 
-A quick introduction of the minimal setup you need to get a hello world up &
-running.
-
-!!!!!!!!!!!! EXPLAIN THE INSTALL PROCESS !!!!!!!!!!!!!!!
-```shell
-packagemanager install awesome-project
-awesome-project start
-awesome-project "Do something!"  # prints "Nah."
-```
-
-Here you should say what actually happens when you execute the code above.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-## Developing
-
-Here's a brief intro about what a developer must do in order to start developing
-the project further:
+Installation is simple. At the command line type:
 
 ```shell
-git clone https://github.com/your/awesome-project.git
-cd awesome-project/
-packagemanager install
+pip install ex3groupf
 ```
 
-And state what happens step-by-step.
+Thereafter you should be able to import the ex3groupf package. This package makes use of the following libraries, that you will need to install if you have not already:
+numpy
+operator
+pandas
+re
+requests
+sklearn
+statsmodels
+time
+warnings
 
-### Building
+Once the required packages are installed, you can make sure everything is working by executing the samplerun.py code included in the respository.
 
-If your project needs some additional steps for the developer to build the
-project after some code changes, state them here:
-
-```shell
-./configure
-make
-make install
-```
-
-Here again you should state what actually happens when the code above gets
-executed.
-
-### Deploying / Publishing
-
-In case there's some step you have to take that publishes this project to a
-server, this is the right time to state it.
-
-```shell
-packagemanager deploy awesome-project -s server.com -u username -p password
-```
-
-And again you'd need to tell what the previous code actually does.
 
 ## Features
 
-What's all the bells and whistles this project can perform?
-* What's the main functionality
-* You can also do another thing
-* If you get really randy, you can even do this
+This package includes 5 functions that allow for make for easy data cleaning and model development in an automated or human-assisted fashion. The algorithms implemented are:
 
-## Configuration
+A.1) Automated Data Cleaning. Identifies rows that contain invalid values - Null, NAN, and outliers - and automatically solves the problem. Null values are replaced with the highest frequency values, while NaN values are substituted by 0. Values are identified as outliers if they lie outside of the mean +/- 3 times the standard deviation, and are replaced by the closest (the next highest or lowest) value that is not determined to be an outlier.
 
-Here you should write what are all of the configurations a user can enter when
-using the project.
+A.4.1) Automated Dummy Creation and Transformation with Automated Supervised Binning. This function automatically bins numerical values based on entropy (supervised) and creates dummy variables to represent the new factors.
 
-#### Argument 1
-Type: `String`  
-Default: `'default value'`
+A.6) Automated method comparison and selection. This function develops three models - GML, Random Forest and SVM - and each model's Gini score and performance. The model with the highest Gini score is selected. If there are two models with equivalent Gini scores, the model with faster performance is selected.
 
-State what an argument does and how you can use it. If needed, you can provide
-an example below.
+H.1) Human assisted Data Cleaning. Gives the user the option to choose different actions when dealing with NULL, NaN and Outlier values. These are the oprtions:
+How do you want to treat the Null values?
+     1.Replaced by highest frequency value
+     2.Replaced by lowest frequency value
+How do you want to treat the NaN values?
+     1.Replaced by zero (0)")
+     2.Replaced by mean")
+How do you want to treat the outliers?
+     1.Replaced by threshold
+     2.Replaced by mean
+     3.Replaced by median
 
-Example:
-```bash
-awesome-project "Some other value"  # Prints "You're nailing this readme!"
-```
-
-#### Argument 2
-Type: `Number|Boolean`  
-Default: 100
-
-Copy-paste as many of these as you need.
-
-## Contributing
-
-When you publish something open source, one of the greatest motivations is that
-anyone can just jump in and start contributing to your project.
-
-These paragraphs are meant to welcome those kind souls to feel that they are
-needed. You should state something like:
-
-"If you'd like to contribute, please fork the repository and use a feature
-branch. Pull requests are warmly welcome."
-
-If there's anything else the developer needs to know (e.g. the code style
-guide), you should link it here. If there's a lot of things to take into
-consideration, it is common to separate this section to its own file called
-`CONTRIBUTING.md` (or similar). If so, you should say that it exists here.
+H.5) Human assisted method picking. Provides the user with a list of options for selecting a model:
+1) The model with the highest Gini
+2) The model with the fastest performance
+3) The user can manually select GML
+4) The user can manually select Random Forest
+5) The user can manually select SVM.
+Upon selecting a model, the user will be prompted to complete the necessary parameters, including training and test files. Default values are provided for all parameters, in case the user opts not to choose their own.
 
 ## Licensing
 
-One really important part: Give your project a proper license. Here you should
-state what the license is and how to find the text version of the license.
-Something like:
-
-"The code in this project is licensed under MIT license."
+The code in this project is licensed under MIT license.
