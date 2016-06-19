@@ -4,7 +4,7 @@ Created on Sun Jun 19 20:14:56 2016
 
 @author: Group F
 
-Github: https://github.com/LJohnnes/ex3groupf
+Github: https://github.com/LJohnnes/iembdfa
 
 To install the package run:
     pip install ex3groupf
