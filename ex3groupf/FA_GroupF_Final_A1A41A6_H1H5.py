@@ -19,6 +19,8 @@ import time
 from sklearn import cross_validation, linear_model
 import operator
 import warnings
+from scipy.stats import entropy
+
 
 warnings.filterwarnings('ignore')
 
@@ -115,8 +117,8 @@ def model_configuration(option):
     Parameter configuration to execute the funtion :
     ** H5   Human assisted method picking
     model_selection(option, devfile, ootfile, RF_estimators, RF_depth, SVM_kernel, SVM_degree)
+   
     '''
-    
     print("\n"*50)
     print("\n Configuracion de Parametros (Option %s):\n" % option)
     devfile = input("\n Input training filename and path (dev.csv): ")
@@ -185,7 +187,9 @@ def MenuOption(value):
 
 def models(devfile,ootfile):
        """
-       H5   Human assisted method picking
+       A6  Automated method comparison and choosing
+       This funtion select the best method base on Gini Score and the by the speed performance
+       Uses the files dev.csv and oot0csv
        """
        ### LOAD DATASET
 
@@ -196,8 +200,8 @@ def models(devfile,ootfile):
        #df = pd.read_csv("https://dl.dropboxusercontent.com/u/28535341/dev.csv") #DEV-SAMPLE
        #dfo = pd.read_csv("https://dl.dropboxusercontent.com/u/28535341/oot0.csv")#OUT-OF-TIME SAMPLE
 
-       df= pd.read_csv("dev.csv")
-       dfo = pd.read_csv("oot0.csv")#OUT-OF-TIME SAMPLE
+       #df= pd.read_csv("dev.csv")
+       #dfo = pd.read_csv("oot0.csv")#OUT-OF-TIME SAMPLE
 
        df= pd.read_csv(devfile)
        dfo = pd.read_csv(ootfile)#OUT-OF-TIME SAMPLE
@@ -435,6 +439,8 @@ def model_selection(option, devfile, ootfile, RF_estimators, RF_depth, SVM_kerne
        
        '''
        df= pd.read_csv(devfile)
+       dfo = pd.read_csv(ootfile)
+       
 
        in_model = []
        list_ib = set()  #input binary
@@ -568,13 +574,75 @@ def model_selection(option, devfile, ootfile, RF_estimators, RF_depth, SVM_kerne
 
            
        input(" \nPress enter to continue...")
+
+       ####### Predict Model
+       dfo=dfo.fillna(0) ### Change all NA for 0
+       if BA[0]=="GML":
+           ## Predict GML
+           Xo = dfo[list(set(in_model))]
+           pred_score= resultGML.predict(Xo)
+           dfo['pred'] = pred_score   ## GML
+           dfo_tosend = dfo[list(['id','pred'])]
+           dfo_tosend = dfo_tosend.sort_values('id')
+           #print(dfo.head())
+           #print(dfo_tosend.head())
+           print("Prediction Generated with GML")
+           dfo.to_csv("oot_predGML.csv")
+           dfo_tosend.to_csv("oot_id_pred_GML.csv")
+       elif BA[0]=="RF":
+           ## Predict RF       
+           XoRF = dfo[list(set(in_modelF))]
+           #y_pred = resultRF.predict(X)
+           yo_predRF = resultRF.predict(XoRF)
+           yo_predPRF = resultRF.predict_proba(XoRF)
+           yo_pred10RF = yo_predPRF.round()
+           dfo['pred'] = yo_predPRF[0:,0]
+           dfo_tosend = dfo[list(['id','pred'])]
+           dfo_tosend = dfo_tosend.sort_values('id')
+           #print(dfo.head())
+           #print(dfo_tosend.head())
+           print("Prediction Generated with RF")
+           dfo.to_csv("oot_pred_RF.csv")
+           dfo_tosend.to_csv("oot_id_pred_RF.csv")
+       elif BA[0]=="SVM":
+           ## Predict SVM       
+           XoSVM = dfo[list(set(in_modelF))]
+           #y_pred = resultRF.predict(X)
+           yo_predSVM = resultSVM.predict(XoSVM)
+           yo_predPSVM = resultSVM.predict_proba(XoSVM)
+           yo_pred10SVM = yo_predPSVM.round()
+           dfo['pred'] = yo_predPSVM[0:,0]
+           dfo_tosend = dfo[list(['id','pred'])]
+           dfo_tosend = dfo_tosend.sort_values('id')
+           #print(dfo.head())
+           #print(dfo_tosend.head())
+           print("Prediction Generated with SVM")
+           dfo.to_csv("oot_pred_SVM.csv")
+           dfo_tosend.to_csv("oot_id_pred_SVM.csv")
+       print("\n****************************")
+       input(" \nPress enter to continue...")
        return "0"
 
 def automated_data_cleaning(option):
+    """
+    A1  Automated Data Cleaning
+    This algorithm automatically choose for the user the different actions 
+    when dealing with NULL's, NaN's and Outliers.
+    \nNULL values it changes for the high frequency values
+    NaN values it changes by 0
+    Finally for Outliers it changes with the corresponding upper or lower threshold
+    It uses a file called "dev-sample.csv" which has dummy values to validate the algorithm
+    """
     print("\n"*50)
     print("\n A1 Automated Data Cleaning (Option %s):\n" % option)
+    devfile = input("\n Input training filename and path (dev-sample.csv): ")
+    if devfile =="":
+        devfile="dev-sample.csv"
+    df_full= pd.read_csv(devfile)
+    columns = ['ib_var_2','icn_var_22','ico_var_25','if_var_68','if_var_78','ob_target']
+    df=df_full[list(columns)]
     print("\nINPUT Data Set")
-    df = pd.read_csv("dev-sample.csv")
+    #df = pd.read_csv("dev-sample.csv")
     print(df.head(10))
     print("\nNumber of records:", len(df.index))
     print("number of variables:", len(df.columns))
@@ -639,9 +707,31 @@ def automated_data_cleaning(option):
     return "0"
     
 def human_assit_data_clean(option):
+    """
+    H1   Human assisted Data Cleaning
+    This algorithm gives the user the option to choose different actions 
+    when dealing with NULL's, NaN's and Outliers. These are the oprtions:
+    \nHow do you want to treat the Null values?
+     1.Replaced by highest frequency value
+     2.Replaced by lowest frequency value
+    \nHow do you want to treat the NaN values
+     1.Replaced by zero (0)")
+     2.Replaced by mean")
+    \nHow do you want to treat the outliers
+     1.Replaced by threshold
+     2.Replaced by mean
+     3.Replaced by median
+    It uses a file called "dev-sample.csv" which has dummy values to validate the algorithm
+    """
     pd.options.mode.chained_assignment = None  # default='warn'
     print("\n"*50)
     print("\n H1 Human Assited Data Cleaning (Option %s):\n" % option)
+    devfile = input("\n Input training filename and path (dev-sample.csv): ")
+    if devfile =="":
+        devfile="dev-sample.csv"
+    df_full= pd.read_csv(devfile)
+    columns = ['ib_var_2','icn_var_22','ico_var_25','if_var_68','if_var_78','ob_target']
+    df=df_full[list(columns)]
     
     #nullMethod = input("how do you want to treat null values? replaced by highest frequency or lowest?")
     #nanMethod = input("how do you want to treat nan values? replaced by 0 or mean?")
@@ -665,7 +755,7 @@ def human_assit_data_clean(option):
     print("3.Replaced by median")
     outlierMethod = input("Choose your option (1, 2, or 3):")
     
-    df = pd.read_csv("dev-sample.csv")
+    #df = pd.read_csv("dev-sample.csv")
     print("\nINPUT Data Set")
     print(df.head(10))
     records = len(df.index)
@@ -750,7 +840,9 @@ def human_assit_data_clean(option):
     return "0"
 
 def DummyTransform(InputDataFrame,ColumnsToTransform=None):
-    """This function is used to transform categorial or nominal variables in a data frame to dummy variables\n
+    """
+    A41 Automated Dummy Creation and Transformation with Automated Supervised Binning
+    This function is used to transform categorial or nominal variables in a data frame to dummy variables\n
     for example: Animal column will have 3 values (dog, cat, rat), then this function will return data frame
     with additional 3 columns Animal_dog, Animal_cat, Animal_rat but without the original Animal column\n
     
@@ -786,6 +878,96 @@ def DummyTransform(InputDataFrame,ColumnsToTransform=None):
     #
     #==============================================================================
 
+def GetEntropy(data,ColumnName,AssociatedColumnName,Separator_value):
+    lower_band_count=len(data[(data[ColumnName]<=Separator_value)])
+    Fraud_lower_band_count=len(data[(data[ColumnName]<=Separator_value) & (data[AssociatedColumnName]==1)])
+    NonFraud_lower_band_count=len(data[(data[ColumnName]<=Separator_value) & (data[AssociatedColumnName]==0)])
+    upper_band_count=len(data[(data[ColumnName]>Separator_value)])
+    Fraud_upper_band_count=len(data[(data[ColumnName]>Separator_value) & (data[AssociatedColumnName]==1)])
+    NonFraud_upper_band_count=len(data[(data[ColumnName]>Separator_value) & (data[AssociatedColumnName]==0)])
+    if lower_band_count>0:
+        entropy_low_band=entropy([NonFraud_lower_band_count/lower_band_count,Fraud_lower_band_count/lower_band_count],None,2)
+    else:
+        entropy_low_band=0
+    if upper_band_count>0:
+        entropy_upper_band=entropy([NonFraud_upper_band_count/upper_band_count,Fraud_upper_band_count/upper_band_count],None,2)
+    else:
+        entropy_upper_band=0
+    inf_entropy=entropy_low_band+entropy_upper_band
+    return inf_entropy
+
+def MinEntropySplit(CutPoints):
+    min_val=10
+    for k,v in CutPoints.items():
+        min_val=min(min_val,k)
+    return CutPoints[min_val]
+    
+
+def selectBin(data,ColumnName,AssociatedColumnName):
+    tempdf=data[[ColumnName,AssociatedColumnName]]
+    Bin_Number=min(10,int(round(np.sqrt( int(round(max(tempdf[ColumnName]),0))),0)))
+    BinPoints=Binning(tempdf,ColumnName,AssociatedColumnName,Bin_Number)
+    #print("Last Number of bins now ",len(BinPoints)," Bin Points",BinPoints )
+    newbin = []
+    length = len(BinPoints)
+    value = np.array(tempdf[ColumnName])
+    for i in range(0, len(tempdf)):
+        if value[i] <= BinPoints[0]:
+            newbin.append("<= "+str(BinPoints[0]))
+        for j in range(length-1):
+            if value[i] > BinPoints[j] and value[i] <= BinPoints[j+1]:
+                newbin.append(str(BinPoints[j])+" - "+str(BinPoints[j+1]))
+        if value[i] > BinPoints[length-1]:
+            newbin.append("> "+str(BinPoints[length-1]))
+    data[ColumnName+'_bin']= pd.Series(newbin,data.index)
+    return data
+    
+def GetBin(min_value,max_value,tempdf,ColumnName,AssociatedColumnName):
+    CutPoints={}
+    Middle_Point=(max_value+min_value)/2
+    First_Quarter=(Middle_Point-min_value)/2
+    Third_Quarter=First_Quarter+Middle_Point
+    separators=[First_Quarter,Middle_Point,Third_Quarter]
+    tempdf=tempdf[(tempdf[ColumnName]<=max_value) & (tempdf[ColumnName]>min_value)]
+    for separator in separators:
+        inf_entropy=GetEntropy(tempdf,ColumnName,AssociatedColumnName,int(round(separator,0)))
+        CutPoints[inf_entropy]=separator
+    return int(MinEntropySplit(CutPoints))
+    
+def Binning(tempdf,ColumnName,AssociatedColumnName,Bin_Number):
+    BinPoints=list()
+    #print("Number of bins now ",len(BinPoints)," Bin Points",BinPoints )
+    min_value=int(round(min(tempdf[ColumnName])))
+    max_value=int(round(max(tempdf[ColumnName]),0))
+    Chosen_Separator=GetBin(min_value,max_value,tempdf,ColumnName,AssociatedColumnName)
+    BinPoints.append(Chosen_Separator)
+    Ben_length=len(BinPoints)
+    while Ben_length<=Bin_Number/2:
+        for i in range(0,Ben_length+1):
+            if (i==0):
+                min_value=int(round(min(tempdf[ColumnName])))
+                max_value=BinPoints[i]
+                #low_df=tempdf[(tempdf[ColumnName]<=Chosen_Separator)]
+                Chosen_Separator=GetBin(min_value,max_value,tempdf,ColumnName,AssociatedColumnName)
+                BinPoints.append(Chosen_Separator)
+            elif(i==Ben_length):
+                min_value=BinPoints[i-1]
+                max_value=int(round(max(tempdf[ColumnName]),0))
+                #high_df=tempdf[(tempdf[ColumnName]>Chosen_Separator)]
+                Chosen_Separator=GetBin(min_value,max_value,tempdf,ColumnName,AssociatedColumnName)
+                BinPoints.append(Chosen_Separator)
+            else:
+                min_value=BinPoints[i-1]
+                max_value=BinPoints[i]
+                #high_df=tempdf[(tempdf[ColumnName]>Chosen_Separator)]
+                Chosen_Separator=GetBin(min_value,max_value,tempdf,ColumnName,AssociatedColumnName)
+                BinPoints.append(Chosen_Separator)
+        BinPoints=set(BinPoints)
+        BinPoints=list(BinPoints)
+        BinPoints=sorted(BinPoints)
+        Ben_length=len(BinPoints)
+    return BinPoints
+
 def automated_dummy_creation(option):
     print("\n"*50)
     print("\n A41 Automated Dummy Creation and Transformation with Automated Supervised Binning\n (Option %s):\n" % option)
@@ -793,10 +975,23 @@ def automated_dummy_creation(option):
     if devfile =="":
         devfile="dev.csv"
     df= pd.read_csv(devfile)
-    new_df=DummyTransform(df,['ico_var_61', 'ico_var_62', 'ico_var_63'])
+    
+    new_df_dummy=DummyTransform(df,['ico_var_61', 'ico_var_62', 'ico_var_63'])
    
     print("\n Data Set Dummy Creation\n")
-    print(new_df.head(10))
+    print(" This create new columns with the values that was dummy \ntransformed from the given columns")
+    print(new_df_dummy.head(10))
+    print("\nThis create new columns with the values that was dummy \ntransformed from the given columns")
+    input(" \nPress enter to continue...")
+    
+    ColumnName='if_var_68'
+    AssociatedColumnName='ob_target'
+    #df = pd.read_csv("D:/IE Masters/Third Semester/Financial Analytics/dev.csv")
+    new_df=selectBin(df,ColumnName,AssociatedColumnName)
+    new_df.columns[len(new_df.columns)-1]
+    print("\n Showing the selected column with its supervised binning \nthat was done in association of the Target variable")
+    print(new_df[['if_var_68',new_df.columns[len(new_df.columns)-1]]])
+    print("\n Showing the selected column with its supervised binning \nthat was done in association of the Target variable")
     input(" \nPress enter to continue...")
     return "0"   
 
